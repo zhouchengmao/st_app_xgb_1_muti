@@ -3,6 +3,10 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import StratifiedKFold
 import numpy as np
+import joblib
+
+
+flag = True
 
 
 def check_invalid_input_val(val):
@@ -10,6 +14,16 @@ def check_invalid_input_val(val):
 
 
 def setup_ml_model():
+    global flag
+    if flag:
+        try:
+            model = joblib.load('mxgb_muti.pkl')
+            print("成功从文件中加载模型。")
+            return model
+        except FileNotFoundError:
+            print("未找到模型文件，开始重新训练模型。")
+            flag = False
+
     data = pd.read_csv('pocd_muti.csv')
     X = data[['ES', 'NYHA Class', 'PAH', 'SP02', 'ASA PS']]
     y = data['Maternal combined endpoint']
@@ -29,6 +43,10 @@ def setup_ml_model():
     avg_accuracy = np.mean(cv_scores)
     print(f"5折交叉验证的平均准确率: {avg_accuracy}")
     model.fit(X, y)
+
+    # 保存模型到文件
+    joblib.dump(model, 'mxgb_muti.pkl')
+    print("模型已保存到文件 mxgb_muti.pkl")
 
     return model
 
